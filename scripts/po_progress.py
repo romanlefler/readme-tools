@@ -2,6 +2,7 @@ import sys
 import subprocess
 import os
 import re
+import argparse
 
 import matplotlib.pyplot as plt
 
@@ -36,11 +37,13 @@ def get_stats(path: str):
     total = n_translated + n_fuzzy + n_untranslated
     return total, n_translated, n_fuzzy, n_untranslated
 
-def create_rows(paths: list[str]):
-    rows = [ ]
+def create_rows(paths: list[str], ignoreZeroes: bool = False):
+    rows: list[dict[str, float | int | str]] = [ ]
 
     for f in paths:
         total, n_translated, n_fuzzy, n_untranslated = get_stats(f);
+        if ignoreZeroes and n_translated == 0:
+            continue
         rows.append({
             "lang": get_locale_name_from_path(f),
             "total": total,
@@ -51,8 +54,19 @@ def create_rows(paths: list[str]):
         })
     return rows
 
-def create_chart(inPaths: list[str], outPath: str):
-    rows = create_rows(inPaths)
+def create_chart(
+        inPaths: list[str], outPath: str,
+        ignoreZeroes: bool = False,
+        theme: str | None = None
+):
+    if theme:
+        try:
+            plt.style.use(theme)
+        except OSError:
+            print(f"Invalid matplotlib theme: {theme}")
+            return
+
+    rows = create_rows(inPaths, ignoreZeroes)
 
     rows = sorted(rows, key=lambda k: k["percent"])
     langs = [ k["lang"] for k in rows ]
@@ -74,7 +88,7 @@ def create_chart(inPaths: list[str], outPath: str):
         ax.text(
             pct + 1,
             i,
-            f"{pct:.1f}%",
+            f"{pct:.0f}%",
             va="center",
             fontsize=9,
         )
@@ -87,14 +101,39 @@ def create_chart(inPaths: list[str], outPath: str):
     plt.close(fig)
 
 def main():
-    args = sys.argv
-    if(len(args)) < 3:
+    parser = argparse.ArgumentParser(
+            description="Generate translation progress chart from .po files."
+    )
+
+    parser.add_argument("inputs", nargs="+", help="Input .po files")
+    parser.add_argument("output", help="Output image path")
+
+    parser.add_argument(
+        "-0",
+        "--ignore-zeroes",
+        action="store_true",
+        help="Hide languages with 0.0% translated strings"
+    )
+
+    parser.add_argument(
+        "-t",
+        "--theme",
+        default=None,
+        help="Matplotlib style theme"
+    )
+
+    args = parser.parse_args()
+
+    if len(args.inputs) < 1:
         print(f"Usage: python {args[0]} <in .po files>... <out image>")
         return
 
-    inPaths = args[1:-1]
-    outPath = args[-1]
-    create_chart(inPaths, outPath)
+    create_chart(
+        inPaths=args.inputs,
+        outPath=args.output,
+        ignoreZeroes=args.ignore_zeroes,
+        theme=args.theme
+    )
 
 if __name__ == "__main__":
     main()
