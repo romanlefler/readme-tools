@@ -4,6 +4,8 @@ import os
 import re
 import argparse
 
+from pathlib import Path
+from babel import Locale
 import matplotlib.pyplot as plt
 
 def get_locale_name_from_path(path: str):
@@ -12,7 +14,20 @@ def get_locale_name_from_path(path: str):
         i = parts.index("locale")
         if i + 1 != len(parts):
             return parts[i + 1]
-    return os.path.basename(path)
+    return Path(path).stem
+
+def get_readable_lang_name(tag: str):
+    try:
+        return Locale.parse(tag).get_display_name("en")
+    except Exception:
+        return tag
+    # title case
+    parts = [p.strip().title() for p in raw.split(",")]
+    return ", ".join(parts)
+
+def lang_name_from_file(path: str):
+    tag = get_locale_name_from_path(path)
+    return get_readable_lang_name(tag)
 
 def get_stats(path: str):
     cmd = [ "msgfmt", "--statistics", "-o", os.devnull, path ]
@@ -45,7 +60,7 @@ def create_rows(paths: list[str], ignoreZeroes: bool = False):
         if ignoreZeroes and n_translated == 0:
             continue
         rows.append({
-            "lang": get_locale_name_from_path(f),
+            "lang": lang_name_from_file(f),
             "total": total,
             "translated": n_translated,
             "fuzzy": n_fuzzy,
@@ -118,7 +133,7 @@ def main():
     parser.add_argument(
         "-t",
         "--theme",
-        default=None,
+        default="ggplot",
         help="Matplotlib style theme"
     )
 
