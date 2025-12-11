@@ -127,7 +127,7 @@ def main():
         "-0",
         "--ignore-zeroes",
         action="store_true",
-        help="Hide languages with 0.0% translated strings"
+        help="Hide languages with 0.0%% translated strings"
     )
 
     parser.add_argument(
