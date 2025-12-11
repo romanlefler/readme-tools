@@ -121,7 +121,7 @@ def main():
     )
 
     parser.add_argument("inputs", nargs="+", help="Input .po files")
-    parser.add_argument("output", help="Output image path")
+    parser.add_argument("output", help="Output image path or - for stdout")
 
     parser.add_argument(
         "-0",
