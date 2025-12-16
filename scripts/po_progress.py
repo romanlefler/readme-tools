@@ -87,7 +87,7 @@ def create_chart(
     langs = [ k["lang"] for k in rows ]
     percents = [ k["percent"] for k in rows ]
 
-    fig, ax = plt.subplots(figsize=(8, 0.5 * len(rows) + 1))
+    fig, ax = plt.subplots(figsize=(10, 0.25 * len(rows)))
 
     y_positions = range(len(langs))
     ax.barh(y_positions, percents)
