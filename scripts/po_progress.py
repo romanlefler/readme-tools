@@ -8,7 +8,7 @@ from pathlib import Path
 from babel import Locale
 import matplotlib.pyplot as plt
 
-def err(s: str) -> void:
+def err(s: str):
     print(s, file=sys.stderr)
 
 def get_locale_name_from_path(path: str):
