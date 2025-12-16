@@ -72,7 +72,10 @@ def create_rows(paths: list[str], ignoreZeroes: bool = False):
 def create_chart(
         inPaths: list[str], outPath: str,
         ignoreZeroes: bool = False,
-        theme: str | None = None
+        theme: str | None = None,
+        heightScale: float = 0.25,
+        widthScale: float = 10,
+        ratio: str = ""
 ):
     if theme:
         try:
@@ -87,7 +90,19 @@ def create_chart(
     langs = [ k["lang"] for k in rows ]
     percents = [ k["percent"] for k in rows ]
 
-    fig, ax = plt.subplots(figsize=(10, 0.25 * len(rows)))
+    height = heightScale * len(rows)
+    width = widthScale
+    if ratio != "":
+        match = re.match(r"^(\d+(?:\.\d+)?):(\d+(?:\.\d+)?)$", ratio)
+        if match:
+            w = float(match.group(1))
+            h = float(match.group(2))
+            width = height * (w / h)
+        else:
+            print(f"Invalid ratio format: {ratio}")
+            print("Expected format: W:H (e.g. 2:1)")
+            return
+    fig, ax = plt.subplots(figsize=(width, height))
 
     y_positions = range(len(langs))
     ax.barh(y_positions, percents)
@@ -137,6 +152,30 @@ def main():
         help="Matplotlib style theme"
     )
 
+    parser.add_argument(
+        "-y",
+        "--height",
+        type=float,
+        default=0.25,
+        help="Height scale (default: 0.25)"
+    )
+
+    parser.add_argument(
+        "-x",
+        "--width",
+        type=float,
+        default=10,
+        help="Width scale (default: 10). Ignored if -r/--ratio is set."
+    )
+
+    parser.add_argument(
+        "-r",
+        "--ratio",
+        type=str,
+        default="",
+        help="Enforce a specific ratio, adjusting width based on height scale (format: W:H, e.g., 2:1)"
+    )
+
     args = parser.parse_args()
 
     if len(args.inputs) < 1:
@@ -147,7 +186,10 @@ def main():
         inPaths=args.inputs,
         outPath=args.output,
         ignoreZeroes=args.ignore_zeroes,
-        theme=args.theme
+        theme=args.theme,
+        heightScale=args.height,
+        widthScale=args.width,
+        ratio=args.ratio
     )
 
 if __name__ == "__main__":
