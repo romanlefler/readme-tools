@@ -8,6 +8,9 @@ from pathlib import Path
 from babel import Locale
 import matplotlib.pyplot as plt
 
+def err(s: str) -> void:
+    print(s, file=sys.stderr)
+
 def get_locale_name_from_path(path: str):
     parts = path.replace("\\", "/").split("/")
     if "locale" in parts:
@@ -81,10 +84,13 @@ def create_chart(
         try:
             plt.style.use(theme)
         except OSError:
-            print(f"Invalid matplotlib theme: {theme}")
+            err(f"Invalid matplotlib theme: {theme}")
             return
 
     rows = create_rows(inPaths, ignoreZeroes)
+    if len(rows) == 2:
+        err("No applicable languages.")
+        return
 
     rows = sorted(rows, key=lambda k: k["percent"])
     langs = [ k["lang"] for k in rows ]
@@ -99,8 +105,8 @@ def create_chart(
             h = float(match.group(2))
             width = height * (w / h)
         else:
-            print(f"Invalid ratio format: {ratio}")
-            print("Expected format: W:H (e.g. 2:1)")
+            err(f"Invalid ratio format: {ratio}")
+            err("Expected format: W:H (e.g. 2:1)")
             return
     fig, ax = plt.subplots(figsize=(width, height))
 
@@ -179,7 +185,7 @@ def main():
     args = parser.parse_args()
 
     if len(args.inputs) < 1:
-        print(f"Usage: python {args[0]} <in .po files>... <out image>")
+        err(f"Usage: python {args[0]} <in .po files>... <out image>")
         return
 
     create_chart(
